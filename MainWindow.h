@@ -48,7 +48,10 @@ public slots:
 	void	OnFavourite();
 	void	OnExport();
 	void	RemoveCurrent();
+
 	void	FullSync();
+	void	SaveCurrent();
+
 	void	SetEditorFont(const QFont& font, int tabSize = 4);
 
 private slots:
@@ -58,7 +61,6 @@ private slots:
 	void	OnTextChanged();
 	void	OnTagsChanged();
 	void	OnSearchChanged();
-	void	SaveCurrent();
 	void	SaveAll();
 	void	OnEnter();
 	void	OnTimeout();

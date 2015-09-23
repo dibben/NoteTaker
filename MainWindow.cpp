@@ -83,8 +83,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->fNoteList->setContextMenuPolicy(Qt::ActionsContextMenu);
 
 
+	QAction* syncCurrentAction = new QAction("Sync Current", this);
+	syncCurrentAction->setShortcut(QKeySequence("Ctrl+S"));
+	connect(syncCurrentAction, SIGNAL(triggered(bool)), this, SLOT(SaveCurrent()));
+	addAction(syncCurrentAction);
+
 	QAction* syncAction = new QAction("Full Sync", this);
-	syncAction->setShortcut(QKeySequence("Ctrl+S"));
+	syncAction->setShortcut(QKeySequence("Ctrl+Shift+S"));
 	connect(syncAction, SIGNAL(triggered(bool)), this, SLOT(FullSync()));
 	addAction(syncAction);
 
@@ -94,10 +99,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	addAction(tagsAction);
 
 	QAction* settingsAction = new QAction("Settings...", this);
-
 	connect(settingsAction, SIGNAL(triggered(bool)), this, SLOT(OnSettings()));
-	addAction(syncAction);
+	addAction(settingsAction);
 
+	ui->fSettingsButton->addAction(syncCurrentAction);
 	ui->fSettingsButton->addAction(syncAction);
 	ui->fSettingsButton->addAction(settingsAction);
 	ui->fSettingsButton->setPopupMode(QToolButton::InstantPopup);
@@ -500,6 +505,8 @@ void MainWindow::FullSync()
 
 	UpdateNoteList();
 }
+
+
 
 void MainWindow::SetEditorFont(const QFont& font, int tabSize)
 {
