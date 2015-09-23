@@ -1,5 +1,4 @@
 
-
 QT += core gui widgets network
 
 TARGET = NoteTaker
@@ -11,7 +10,7 @@ UI_DIR=.ui
 
 
 SOURCES += main.cpp\
-		MainWindow.cpp \
+	MainWindow.cpp \
 	Note.cpp \
 	SettingsDialog.cpp \
 	NoteSyntaxHighlighter.cpp \
@@ -36,3 +35,8 @@ FORMS    += MainWindow.ui \
 
 RESOURCES += \
     NoteTaker.qrc
+
+OTHER_FILES += README.md \
+			   LICENSE
+
+
