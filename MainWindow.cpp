@@ -31,6 +31,7 @@
 #include <QJsonArray>
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <QFileDialog>
 
 
 
@@ -58,7 +59,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	fTimer->setInterval(5000);
 	fTimer->start();
 	connect(fTimer, SIGNAL(timeout()), this, SLOT(OnTimeout()));
-
 
 
 	QAction* quitAction = new QAction(tr("Quit"), this);
@@ -114,7 +114,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->fEditor, SIGNAL(textChanged()), this, SLOT(OnTextChanged()));
 	connect(ui->fSearchEdit, SIGNAL(textChanged(QString)), this, SLOT(OnSearchChanged()));
 	connect(ui->fTagsEdit, SIGNAL(textChanged(QString)), this, SLOT(OnTagsChanged()));
-
+	connect(ui->fExportButton, SIGNAL(clicked(bool)), this, SLOT(OnExport()));
 
 	fCurrent = -1;
 
@@ -439,7 +439,17 @@ void MainWindow::SetMessage(const QString& message)
 
 void MainWindow::OnExport()
 {
+	QListWidgetItem* current = ui->fNoteList->currentItem();
+	if (current == 0) return;
 
+	QSettings settings;
+	QString lastDir = settings.value("export_dir", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+
+	QString filename = QFileDialog::getSaveFileName(this, tr("Save Note As Text"), lastDir, tr("Text Files(*.txt)"));
+	if (!filename.isEmpty()) {
+		int index = current->data(Qt::UserRole).toInt();
+		fNotes.GetNote(index)->Export(filename);
+	}
 }
 
 void MainWindow::RemoveCurrent()

@@ -74,6 +74,8 @@ static	NotePtr	Create(SimpleNote* server, const QString& id);
 		void		Save();
 		void		Remove();
 
+		void		Export(const QString& filename);
+
 static	Note		FromFile(const QString& filename);
 
 private:

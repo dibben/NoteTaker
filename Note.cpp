@@ -316,6 +316,21 @@ void Note::Remove()
 	file.remove();
 }
 
+void Note::Export(const QString& filename)
+{
+	QString path = filename;
+	QFileInfo info(path);
+	if (info.suffix().toLower() != ".txt") {
+		path += ".txt";
+	}
+
+	QFile file(path);
+	if (file.open(QIODevice::WriteOnly)) {
+		QTextStream str(&file);
+		str << Text();
+	}
+}
+
 Note Note::FromFile(const QString& filename)
 {
 	QFile file(filename);
