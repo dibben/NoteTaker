@@ -32,7 +32,8 @@
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QFileDialog>
-
+#include <QNetworkProxy>
+#include <QNetworkProxyFactory>
 
 
 typedef QSharedPointer<Note>	NotePtr;
@@ -211,6 +212,8 @@ void MainWindow::RestoreSettings()
 	QSettings settings;
 	restoreGeometry(settings.value("geometry").toByteArray());
 	ui->fSplitter->restoreState(settings.value("splitter").toByteArray());
+
+	SetProxy();
 }
 
 void MainWindow::OnEnter()
@@ -387,6 +390,7 @@ void MainWindow::OnSettings()
 			delete fSimpleNote;
 			fSimpleNote = 0;
 		}
+		SetProxy();
 	}
 
 	SetEditorFont(settings.CurrentFont(), settings.CurrentTabSize());
@@ -436,6 +440,7 @@ void MainWindow::SetMessage(const QString& message)
 {
 	ui->fMessageLabel->setText(message);
 }
+
 
 void MainWindow::OnExport()
 {
@@ -528,3 +533,29 @@ void MainWindow::SetEditorFont(const QFont& font, int tabSize)
 }
 
 
+
+void MainWindow::SetProxy()
+{
+	QSettings settings;
+	int proxyType = settings.value("proxy_type", SettingsDialog::kSystemProxy).toInt();
+	if (proxyType == SettingsDialog::kNoProxy) {
+		QNetworkProxy proxy(QNetworkProxy::NoProxy);
+		QNetworkProxy::setApplicationProxy(proxy);
+	} else if (proxyType == SettingsDialog::kSystemProxy) {
+		QNetworkProxyFactory::setUseSystemConfiguration(true);
+	} else {
+		QString host = settings.value("proxy_host").toString();
+		QString user = settings.value("proxy_user").toString();
+		QString password = settings.value("proxy_password").toString();
+		int port = settings.value("proxy_port", 80).toInt();
+
+		QNetworkProxy proxy(QNetworkProxy::HttpProxy);
+		proxy.setHostName(host);
+		proxy.setPort(port);
+		if (!user.isEmpty()) {
+			proxy.setUser(user);
+			proxy.setPassword(password);
+		}
+		QNetworkProxy::setApplicationProxy(proxy);
+	}
+}

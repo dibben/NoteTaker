@@ -75,6 +75,8 @@ protected:
 	void	RestoreSettings();
 	void	SetMessage(const QString& message);
 
+	void	SetProxy();
+
 private:
 
 typedef QSharedPointer<Note>	NotePtr;

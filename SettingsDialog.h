@@ -23,10 +23,19 @@ namespace Ui {
 class SettingsDialog;
 }
 
+class QButtonGroup;
+
 class SettingsDialog : public QDialog
 {
 	Q_OBJECT
 public:
+
+enum EProxyType {
+	kNoProxy,
+	kSystemProxy,
+	kCustomProxy
+};
+
 		SettingsDialog(QWidget *parent = 0);
 		~SettingsDialog();
 
@@ -50,6 +59,7 @@ private slots:
 private:
 
 		Ui::SettingsDialog* ui;
+		QButtonGroup*		fProxyGroup;
 
 };
 
