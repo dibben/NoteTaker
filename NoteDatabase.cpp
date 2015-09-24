@@ -57,6 +57,21 @@ NoteDatabase::NotePtr NoteDatabase::GetNote(int index) const
 	return fNotes[index];
 }
 
+QStringList NoteDatabase::AllTags() const
+{
+	QSet<QString> tagSet;
+
+	int numNotes = fNotes.size();
+	for (int eachNote = 0; eachNote < numNotes; ++eachNote) {
+		QStringList tags = fNotes[eachNote]->Tags();
+		foreach (QString tag, tags) {
+			tagSet.insert(tag);
+		}
+	}
+
+	return tagSet.toList();
+}
+
 bool NoteDatabase::UpdateNote(int index, const QString& text)
 {
 	if (index < 0 || index >= Size()) return false;
@@ -78,9 +93,13 @@ void NoteDatabase::DeleteNote(int index)
 	fNotes[index]->Save();
 }
 
-void NoteDatabase::AddNote(const QString& text)
+void NoteDatabase::AddNote(const QString& text, const QString& tag)
 {
-	fNotes.append( NotePtr(new Note(text)));
+	NotePtr note(new Note(text));
+	if (!tag.isEmpty()) {
+		note->SetTags(QStringList() << tag);
+	}
+	fNotes.append( note );
 }
 
 void NoteDatabase::AddNote(NotePtr note)

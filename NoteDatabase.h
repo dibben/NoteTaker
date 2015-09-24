@@ -43,11 +43,14 @@ typedef QSharedPointer<Note>	NotePtr;
 
 	int		Size() const;
 	NotePtr	GetNote(int index) const;
+	QStringList	AllTags() const;
 
 	bool	UpdateNote(int index, const QString& text);
 	void	DeleteNote(int index);
-	void	AddNote(const QString& text);
+	void	AddNote(const QString& text, const QString& tag = QString());
 	void	AddNote(NotePtr note);
+
+
 
 	void	RemoveNotes(const QList<int>& indices);
 	void	RemoveNote(int index);

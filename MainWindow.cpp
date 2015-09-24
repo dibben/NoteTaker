@@ -116,6 +116,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->fSearchEdit, SIGNAL(textChanged(QString)), this, SLOT(OnSearchChanged()));
 	connect(ui->fTagsEdit, SIGNAL(textChanged(QString)), this, SLOT(OnTagsChanged()));
 	connect(ui->fExportButton, SIGNAL(clicked(bool)), this, SLOT(OnExport()));
+	connect(ui->fTagsComboBox, SIGNAL(activated(int)), this, SLOT(OnTagSelected()));
 
 	fCurrent = -1;
 
@@ -127,7 +128,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	UpdateNoteList();
 
 	ui->fNoteList->setCurrentRow(0);
-
 	ui->fNoteList->setFocus();
 
 	RestoreSettings();
@@ -144,6 +144,11 @@ void MainWindow::OnSearchChanged()
 	UpdateNoteList();
 	fHiglighter->SetSearchText(ui->fSearchEdit->text());
 	fHiglighter->rehighlight();
+}
+
+void MainWindow::OnTagSelected()
+{
+	UpdateNoteList();
 }
 
 void MainWindow::SaveCurrent()
@@ -205,6 +210,7 @@ void MainWindow::SaveSettings()
 	QSettings settings;
 	settings.setValue("geometry", saveGeometry());
 	settings.setValue("splitter", ui->fSplitter->saveState());
+	settings.setValue("selected_tag", CurrentTag());
 }
 
 void MainWindow::RestoreSettings()
@@ -255,10 +261,15 @@ void MainWindow::UpdateNoteList()
 	QRegExp expr(searchText);
 	expr.setPatternSyntax(QRegExp::Wildcard);
 
+	QString tagText = CurrentTag();
+
 	int count = 0;
 	for (int i = 0; i < fNotes.Size(); i++) {
 		NotePtr note = fNotes.GetNote(i);
 		if (note->IsDeleted()) continue;
+
+		if (!tagText.isEmpty() && !note->Tags().contains(tagText)) continue;
+
 		if (expr.pattern().isEmpty() || note->Contains(expr)) {
 
 			QListWidgetItem* item = new QListWidgetItem;
@@ -339,6 +350,7 @@ void MainWindow::ClearCurrentNote()
 }
 
 
+
 void MainWindow::OnTextChanged()
 {
 	if (fCurrent < 0) return;
@@ -366,15 +378,16 @@ void MainWindow::OnTagsChanged()
 	QStringList currentTags = ui->fTagsEdit->text().split(" ", QString::SkipEmptyParts);
 	note->SetTags(currentTags);
 	if (note->NeedsSave()) {
+		UpdateTagSelector();
 		SetMessage(tr("Note modified"));
-	}
+	}	
 }
 
 
 
 void MainWindow::OnAdd(const QString& text)
 {
-	fNotes.AddNote(text);
+	fNotes.AddNote(text, CurrentTag());
 	UpdateNoteList();
 	ui->fNoteList->setCurrentRow(ui->fNoteList->count() - 1);
 }
@@ -433,6 +446,7 @@ void MainWindow::SetEditorEnabled(bool enable)
 void MainWindow::LoadNotes()
 {
 	fNotes.LoadNotes();
+	UpdateTagSelector();
 	SetMessage(tr("Notes Loaded"));
 }
 
@@ -473,6 +487,34 @@ void MainWindow::RemoveCurrent()
 		currentRow = ui->fNoteList->count() - 1;
 	}
 	ui->fNoteList->setCurrentRow(currentRow);
+}
+
+QString MainWindow::CurrentTag() const
+{
+	if (ui->fTagsComboBox->currentIndex() == 0) return QString();
+
+	return ui->fTagsComboBox->currentText();
+}
+
+
+void MainWindow::UpdateTagSelector()
+{
+	QString currentTag = CurrentTag();
+
+	ui->fTagsComboBox->clear();
+	ui->fTagsComboBox->addItem(tr("All Notes"));
+
+	QStringList tags = fNotes.AllTags();
+	tags.sort();
+	ui->fTagsComboBox->addItems(tags);
+
+	if (currentTag.isEmpty()) {
+		ui->fTagsComboBox->setCurrentIndex(0);
+	} else {
+		int pos = ui->fTagsComboBox->findText(currentTag);
+		if (pos < 0) pos = 0;
+		ui->fTagsComboBox->setCurrentIndex(pos);
+	}
 }
 
 SimpleNote* MainWindow::GetSynchroniser()
@@ -519,6 +561,7 @@ void MainWindow::FullSync()
 	}
 
 	UpdateNoteList();
+	UpdateTagSelector();
 }
 
 

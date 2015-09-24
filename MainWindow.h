@@ -39,7 +39,8 @@ public:
 	~MainWindow();
 
 
-	void ClearCurrentNote();
+	void		ClearCurrentNote();
+	QString		CurrentTag() const;
 
 public slots:
 
@@ -48,6 +49,8 @@ public slots:
 	void	OnFavourite();
 	void	OnExport();
 	void	RemoveCurrent();
+
+	void	UpdateTagSelector();
 
 	void	FullSync();
 	void	SaveCurrent();
@@ -61,6 +64,7 @@ private slots:
 	void	OnTextChanged();
 	void	OnTagsChanged();
 	void	OnSearchChanged();
+	void	OnTagSelected();
 	void	SaveAll();
 	void	OnEnter();
 	void	OnTimeout();
