@@ -57,19 +57,23 @@ NoteDatabase::NotePtr NoteDatabase::GetNote(int index) const
 	return fNotes[index];
 }
 
-QStringList NoteDatabase::AllTags() const
+QHash<QString, int> NoteDatabase::AllTags() const
 {
-	QSet<QString> tagSet;
+	QHash<QString, int> tagSet;
 
 	int numNotes = fNotes.size();
 	for (int eachNote = 0; eachNote < numNotes; ++eachNote) {
 		QStringList tags = fNotes[eachNote]->Tags();
 		foreach (QString tag, tags) {
-			tagSet.insert(tag);
+			if (tagSet.contains(tag)) {
+				tagSet[tag]++;
+			} else {
+				tagSet[tag] = 1;
+			}
 		}
 	}
 
-	return tagSet.toList();
+	return tagSet;
 }
 
 bool NoteDatabase::UpdateNote(int index, const QString& text)

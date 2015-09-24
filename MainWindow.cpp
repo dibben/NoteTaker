@@ -34,9 +34,38 @@
 #include <QFileDialog>
 #include <QNetworkProxy>
 #include <QNetworkProxyFactory>
+#include <QStyledItemDelegate>
+#include <QPainter>
 
 
 typedef QSharedPointer<Note>	NotePtr;
+
+class TagListDelegate : public QStyledItemDelegate
+{
+public:
+	TagListDelegate(QObject* parent = 0);
+	void	paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index ) const;
+};
+
+TagListDelegate::TagListDelegate(QObject* parent) :
+					QStyledItemDelegate(parent)
+{
+
+}
+
+void TagListDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+	QStyledItemDelegate::paint(painter, option, index);
+
+	QString count = index.data(Qt::UserRole).toString();
+
+	QFont font = option.font;
+	QRect r = option.rect;
+	painter->setFont(font);
+	painter->setPen(Qt::gray);
+	r = option.rect.adjusted(0, 0, -10, 0);
+	painter->drawText(r.left(), r.top(), r.width(), r.height(), Qt::AlignRight, count);
+}
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -50,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	fSimpleNote = 0;
 
 	ui->fNoteList->setItemDelegate(new ListDelegate(ui->fNoteList));
+	ui->fTagsComboBox->view()->setItemDelegate(new TagListDelegate(ui->fTagsComboBox));
 
 
 	QList<int> sizes;
@@ -504,9 +534,13 @@ void MainWindow::UpdateTagSelector()
 	ui->fTagsComboBox->clear();
 	ui->fTagsComboBox->addItem(tr("All Notes"));
 
-	QStringList tags = fNotes.AllTags();
-	tags.sort();
-	ui->fTagsComboBox->addItems(tags);
+	QHash<QString, int> tagList = fNotes.AllTags();
+	QStringList tagNames = tagList.keys();
+	tagNames.sort();
+	for (int eachTag = 0; eachTag < tagNames.size(); ++eachTag) {
+		QString tag = tagNames[eachTag];
+		ui->fTagsComboBox->addItem(tag, tagList[tag]);
+	}
 
 	if (currentTag.isEmpty()) {
 		ui->fTagsComboBox->setCurrentIndex(0);
@@ -602,3 +636,5 @@ void MainWindow::SetProxy()
 		QNetworkProxy::setApplicationProxy(proxy);
 	}
 }
+
+
