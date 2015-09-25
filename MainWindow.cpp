@@ -314,9 +314,14 @@ void MainWindow::UpdateNoteList()
 	}
 
 	if (selectPos != -1) {
+		ui->fEditor->setText(fNotes.GetNote(currentNote)->Text());
 		ui->fNoteList->setCurrentRow(selectPos);
 		ui->fEditor->setTextCursor(cursor);
 	} else {
+		if (ui->fNoteList->count() > 0) {
+			int index = ui->fNoteList->item(0)->data(Qt::UserRole).toInt();
+			ui->fEditor->setText(fNotes.GetNote(index)->Text());
+		}
 		ui->fNoteList->setCurrentRow(0);
 	}
 
