@@ -313,6 +313,7 @@ void MainWindow::UpdateNoteList()
 		}
 	}
 
+	ClearCurrentNote();
 	if (selectPos != -1) {
 		ui->fEditor->setText(fNotes.GetNote(currentNote)->Text());
 		ui->fNoteList->setCurrentRow(selectPos);
