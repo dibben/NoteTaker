@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=NoteTaker
+GenericName=Note Application
+Comment=Notes application that syncs with simplenote
+Icon=notetaker
+Terminal=false
+Exec=NoteTaker
+Categories=Qt;Utility;TextEditor;

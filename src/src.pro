@@ -49,3 +49,26 @@ OTHER_FILES += README.md \
 unix: {
   PKGCONFIG += hunspell
 }
+
+RC_FILE = notetaker.rc
+
+## INSTALLATION
+
+unix {
+   isEmpty(PREFIX): PREFIX = /usr
+   DATADIR = $${PREFIX}/share
+
+   # install desktop file
+   desktop.path = $${DATADIR}/applications
+   desktop.files += notetaker.desktop
+
+   # install application
+   target.path = $${PREFIX}/bin
+
+   INSTALLS += target desktop
+   message("The project will be installed in prefix $${PREFIX}")
+}
+
+DISTFILES += \
+    notetaker.desktop \
+    notetaker.rc

@@ -1,10 +1,11 @@
 
-.moc/moc_*
-.obj/*.o
-.ui/ui_*.h
+src/.moc/moc_*
+src/.obj/*.o
+src/.ui/ui_*.h
 Makefile
-NoteTaker
+src/Makefile
+src/NoteTaker
 NoteTaker.pro.user
-qrc_NoteTaker.cpp
+src/qrc_NoteTaker.cpp
 
 
