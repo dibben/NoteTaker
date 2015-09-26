@@ -44,6 +44,8 @@ enum EProxyType {
 
 static	QFont	CurrentFont();
 static	int		CurrentTabSize();
+static	QString	CurrentLanguage();
+static	bool	CheckSpelling();
 
 public slots:
 

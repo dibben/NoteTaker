@@ -8,6 +8,9 @@ MOC_DIR=.moc
 OBJECTS_DIR=.obj
 UI_DIR=.ui
 
+unix {
+  CONFIG += link_pkgconfig
+}
 
 SOURCES += main.cpp\
 	MainWindow.cpp \
@@ -18,7 +21,9 @@ SOURCES += main.cpp\
     ListDelegate.cpp \
     NoteEditor.cpp \
     NoteDatabase.cpp \
-    MessageInterface.cpp
+    MessageInterface.cpp \
+    SpellChecker.cpp \
+    SpellingDictionary.cpp
 
 HEADERS  += MainWindow.h \
 	Note.h \
@@ -28,7 +33,9 @@ HEADERS  += MainWindow.h \
     ListDelegate.h \
     NoteEditor.h \
     NoteDatabase.h \
-    MessageInterface.h
+    MessageInterface.h \
+    SpellChecker.h \
+    SpellingDictionary.h
 
 FORMS    += MainWindow.ui \
 	SettingsDialog.ui
@@ -39,4 +46,6 @@ RESOURCES += \
 OTHER_FILES += README.md \
 			   LICENSE
 
-
+unix: {
+  PKGCONFIG += hunspell
+}

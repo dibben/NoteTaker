@@ -31,6 +31,7 @@ class MainWindow;
 }
 
 class QListWidgetItem;
+class SpellChecker;
 
 class MainWindow : public QDialog,
 					public MessageInterface
@@ -82,6 +83,7 @@ protected:
 	void	SetMessage(const QString& message);
 
 	void	SetProxy();
+	void	SetDictionary();
 
 private:
 
@@ -99,8 +101,7 @@ typedef QSharedPointer<Note>	NotePtr;
 	NoteDatabase		fNotes;
 	int					fCurrent;
 	QTimer*				fTimer;
-	NoteSyntaxHighlighter*	fHiglighter;
-	SimpleNote*		fSimpleNote;
+	SimpleNote*			fSimpleNote;
 };
 
 #endif

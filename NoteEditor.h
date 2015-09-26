@@ -20,6 +20,9 @@
 
 #include <QTextEdit>
 
+class SpellChecker;
+class NoteSyntaxHighlighter;
+
 /*!
 	\class  NoteEditor
 	\author Author
@@ -32,24 +35,39 @@ class NoteEditor : public QTextEdit
 {
 	Q_OBJECT
 public:
-	NoteEditor(QWidget *parent = 0);
 
+		NoteEditor(QWidget *parent = 0);
+		~NoteEditor();
+
+
+		void	SetFont(const QFont& font, int tabSize);
+		void	SetSearchText(const QString& text);
+		void	SetSpellingCheckEnabled(bool enabled);
+		void	SetSpellingLanguage(const QString& language);
 
 
 public slots:
 
 		void	OpenURL(const QUrl& url);
-
+		void	ShowContextMenu(const QPoint& pos);
 protected:
 
 
 virtual void	mousePressEvent(QMouseEvent* e);
 
+private slots:
+
+		void	ReplaceWithSuggestion();
+		void	AddWordToUserWordlist();
+
 private:
 
 		QString FindUrl(const QTextCursor& cursor) const;
 		QString FindUrlAtPosition(const QString& text, int pos) const;
+		QMenu*	CreateSuggestionMenu(const QTextCursor& cursor) const;
 
+		NoteSyntaxHighlighter*	fHiglighter;
+		SpellChecker*		fSpellChecker;
 };
 
 #endif

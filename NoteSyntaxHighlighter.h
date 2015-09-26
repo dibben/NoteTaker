@@ -21,6 +21,8 @@
 #include <QSyntaxHighlighter>
 #include <QRegExp>
 
+class SpellChecker;
+
 /*!
 	\class  NoteSyntaxHighlighter
 	\author Author
@@ -33,9 +35,11 @@ class NoteSyntaxHighlighter : public QSyntaxHighlighter
 {
 	Q_OBJECT
 public:
-		NoteSyntaxHighlighter(QTextDocument* parent = 0);
+		NoteSyntaxHighlighter(SpellChecker* checker, QTextDocument* parent = 0);
 
 		void	SetSearchText(const QString& text);
+
+		void	SetCheckSpelling(bool check);
 
 protected:
 
@@ -43,6 +47,10 @@ protected:
 
 private:
 
+		void	HighlightSpelling(const QString& text);
+
+		SpellChecker*	fSpellChecker;
+		bool			fCheckSpelling;
 		QRegExp			fSearchExpr;
 		QRegExp			fUrlExpr;
 		QTextCharFormat	fFormat;

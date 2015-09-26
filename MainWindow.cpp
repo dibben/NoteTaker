@@ -20,6 +20,8 @@
 
 #include "SettingsDialog.h"
 #include "ListDelegate.h"
+#include "SpellChecker.h"
+#include "SpellingDictionary.h"
 
 #include <QAction>
 #include <QKeySequence>
@@ -152,7 +154,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	fCurrent = -1;
 
-	fHiglighter = new NoteSyntaxHighlighter(ui->fEditor->document());
 
 	fNotes.SetMessageReceiver(this);
 
@@ -174,8 +175,7 @@ MainWindow::~MainWindow()
 void MainWindow::OnSearchChanged()
 {
 	UpdateNoteList();
-	fHiglighter->SetSearchText(ui->fSearchEdit->text());
-	fHiglighter->rehighlight();
+	ui->fEditor->SetSearchText(ui->fSearchEdit->text());
 }
 
 void MainWindow::OnTagSelected()
@@ -250,6 +250,8 @@ void MainWindow::RestoreSettings()
 	QSettings settings;
 	restoreGeometry(settings.value("geometry").toByteArray());
 	ui->fSplitter->restoreState(settings.value("splitter").toByteArray());
+
+	SetDictionary();
 
 	SetProxy();
 }
@@ -430,6 +432,8 @@ void MainWindow::OnAdd(const QString& text)
 	ui->fNoteList->setCurrentRow(ui->fNoteList->count() - 1);
 }
 
+
+
 void MainWindow::OnSettings()
 {
 	SettingsDialog settings;
@@ -442,6 +446,7 @@ void MainWindow::OnSettings()
 			fSimpleNote = 0;
 		}
 		SetProxy();
+		SetDictionary();
 	}
 
 	SetEditorFont(settings.CurrentFont(), settings.CurrentTabSize());
@@ -610,14 +615,14 @@ void MainWindow::FullSync()
 
 void MainWindow::SetEditorFont(const QFont& font, int tabSize)
 {
-	ui->fEditor->document()->setDefaultFont(font);
-
-	int width = QFontMetrics(font).averageCharWidth();
-	ui->fEditor->setTabStopWidth(tabSize * width);
-	fHiglighter->rehighlight();
+	ui->fEditor->SetFont(font, tabSize);
 }
 
-
+void MainWindow::SetDictionary()
+{
+	ui->fEditor->SetSpellingLanguage(SettingsDialog::CurrentLanguage());
+	ui->fEditor->SetSpellingCheckEnabled(SettingsDialog::CheckSpelling());
+}
 
 void MainWindow::SetProxy()
 {

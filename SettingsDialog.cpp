@@ -17,6 +17,7 @@
 
 #include "SettingsDialog.h"
 #include "ui_SettingsDialog.h"
+#include "SpellingDictionary.h"
 
 #include <QSettings>
 #include <QButtonGroup>
@@ -38,6 +39,13 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 	connect(ui->fFontComboBox, SIGNAL(activated(int)), this, SLOT(OnFontSelection()));
 	connect(ui->fSizeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(OnFontSelection()));
 	connect(ui->fTabSpinBox, SIGNAL(valueChanged(int)), this, SLOT(OnFontSelection()));
+
+
+	QList<SpellingDictionary> dictionaries = SpellingDictionary::SystemDictionaries();
+
+	foreach (SpellingDictionary dictionary, dictionaries) {
+		ui->fDictionaryCombo->addItem(dictionary.Title(), dictionary.Language());
+	}
 }
 
 SettingsDialog::~SettingsDialog()
@@ -64,6 +72,18 @@ int SettingsDialog::CurrentTabSize()
 	return settings.value("tab_size", 8).toInt();
 }
 
+QString SettingsDialog::CurrentLanguage()
+{
+	QSettings settings;
+	return settings.value("spelling_language", QLocale::system().name()).toString();
+}
+
+bool SettingsDialog::CheckSpelling()
+{
+	QSettings settings;
+	return settings.value("check_spelling", true).toBool();
+}
+
 int SettingsDialog::exec()
 {
 	QSettings settings;
@@ -78,6 +98,16 @@ int SettingsDialog::exec()
 	ui->fFontComboBox->setCurrentFont(font);
 	ui->fSizeSpinBox->setValue(font.pointSize());
 	ui->fTabSpinBox->setValue(settings.value("tab_size", 8).toInt());
+
+	ui->fCheckSpellingBox->setChecked(settings.value("check_spelling", true).toBool());
+	QString language = settings.value("spelling_language", QLocale::system().name()).toString();
+	int pos = ui->fDictionaryCombo->findData(language);
+	if (pos == -1) {
+		pos = ui->fDictionaryCombo->findData(QLocale::system().name());
+	}
+	if (pos != -1) {
+		ui->fDictionaryCombo->setCurrentIndex(pos);
+	}
 
 	//proxy
 	int proxyType = settings.value("proxy_type", kSystemProxy).toInt();
@@ -106,6 +136,8 @@ void SettingsDialog::accept()
 	settings.setValue("font_family", font.family());
 	settings.setValue("font_size", font.pointSize());
 	settings.setValue("tab_size", ui->fTabSpinBox->value());
+	settings.setValue("spelling_language", ui->fDictionaryCombo->currentData());
+	settings.setValue("check_spelling", ui->fCheckSpellingBox->isChecked());
 
 	//proxy
 	settings.setValue("proxy_type", fProxyGroup->checkedId());
