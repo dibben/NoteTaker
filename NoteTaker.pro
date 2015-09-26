@@ -1,51 +1,12 @@
 
-QT += core gui widgets network
+TEMPLATE = subdirs
 
-TARGET = NoteTaker
-TEMPLATE = app
 
-MOC_DIR=.moc
-OBJECTS_DIR=.obj
-UI_DIR=.ui
+SUBDIRS = \
+    src \
+    
 
-unix {
-  CONFIG += link_pkgconfig
-}
-
-SOURCES += main.cpp\
-	MainWindow.cpp \
-	Note.cpp \
-	SettingsDialog.cpp \
-	NoteSyntaxHighlighter.cpp \
-	SimpleNote.cpp \
-    ListDelegate.cpp \
-    NoteEditor.cpp \
-    NoteDatabase.cpp \
-    MessageInterface.cpp \
-    SpellChecker.cpp \
-    SpellingDictionary.cpp
-
-HEADERS  += MainWindow.h \
-	Note.h \
-	SettingsDialog.h \
-	NoteSyntaxHighlighter.h \
-	SimpleNote.h \
-    ListDelegate.h \
-    NoteEditor.h \
-    NoteDatabase.h \
-    MessageInterface.h \
-    SpellChecker.h \
-    SpellingDictionary.h
-
-FORMS    += MainWindow.ui \
-	SettingsDialog.ui
-
-RESOURCES += \
-    NoteTaker.qrc
-
-OTHER_FILES += README.md \
-			   LICENSE
-
-unix: {
-  PKGCONFIG += hunspell
-}
+# build order: 3rdparty -> libs -> app-static -> app & test
+#libs.depends = 3rdparty
+#app.depends = libs app-static
+#test.depends = libs app-static
