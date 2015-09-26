@@ -7,5 +7,4 @@ src/Makefile
 src/NoteTaker
 NoteTaker.pro.user
 src/qrc_NoteTaker.cpp
-
-
+/src/notetaker

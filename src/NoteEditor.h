@@ -19,9 +19,13 @@
 #define NOTE_EDITOR_H
 
 #include <QTextEdit>
+#include <QSharedPointer>
 
 class SpellChecker;
 class NoteSyntaxHighlighter;
+class QCompleter;
+class SnippetCollection;
+class CompleterModel;
 
 /*!
 	\class  NoteEditor
@@ -44,16 +48,22 @@ public:
 		void	SetSearchText(const QString& text);
 		void	SetSpellingCheckEnabled(bool enabled);
 		void	SetSpellingLanguage(const QString& language);
-
+		void	SetCompleter(QSharedPointer<SnippetCollection> snippets);
 
 public slots:
 
 		void	OpenURL(const QUrl& url);
 		void	ShowContextMenu(const QPoint& pos);
+		void	SnippetsUpdated();
+
+		void	InsertCompletion(const QModelIndex& index);
+
 protected:
 
 
 virtual void	mousePressEvent(QMouseEvent* e);
+
+		void	keyPressEvent(QKeyEvent* e);
 
 private slots:
 
@@ -65,9 +75,13 @@ private:
 		QString FindUrl(const QTextCursor& cursor) const;
 		QString FindUrlAtPosition(const QString& text, int pos) const;
 		QMenu*	CreateSuggestionMenu(const QTextCursor& cursor) const;
+		QString textUnderCursor() const;
 
 		NoteSyntaxHighlighter*	fHiglighter;
-		SpellChecker*		fSpellChecker;
+		SpellChecker*			fSpellChecker;
+		QCompleter*				fCompleter;
+		CompleterModel*			fCompleterModel;
+
 };
 
 #endif

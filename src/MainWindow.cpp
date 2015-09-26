@@ -154,8 +154,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	fCurrent = -1;
 
-
 	fNotes.SetMessageReceiver(this);
+
+	fSnippets.reset(new SnippetCollection);
+	ui->fEditor->SetCompleter(fSnippets);
 
 	LoadNotes();
 	UpdateNoteList();
@@ -252,8 +254,8 @@ void MainWindow::RestoreSettings()
 	ui->fSplitter->restoreState(settings.value("splitter").toByteArray());
 
 	SetDictionary();
-
 	SetProxy();
+	LoadSnippets();
 }
 
 void MainWindow::OnEnter()
@@ -359,6 +361,32 @@ void MainWindow::UpdateListItem(NotePtr note, QListWidgetItem* item)
 */
 }
 
+void MainWindow::LoadSnippets()
+{
+	fSnippets->Clear();
+	QString filename = UserSnippetFile();
+	if (QFileInfo::exists(filename)) {
+		fSnippets->Load(UserSnippetFile());
+	} else {
+		fSnippets->RestoreBuiltIn();
+	}
+	ui->fEditor->SnippetsUpdated();
+}
+
+void MainWindow::SaveSnippets() const
+{
+	fSnippets->Save(UserSnippetFile());
+}
+
+QString MainWindow::UserSnippetFile() const
+{
+	QDir path(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
+	if (!path.exists()) {
+		path.mkpath(path.absolutePath());
+	}
+	return path.absoluteFilePath("snippets.json");
+}
+
 
 void MainWindow::OnSelection(int row)
 {
@@ -436,7 +464,9 @@ void MainWindow::OnAdd(const QString& text)
 
 void MainWindow::OnSettings()
 {
-	SettingsDialog settings;
+	SaveSnippets();
+
+	SettingsDialog settings(fSnippets);
 
 	connect(&settings, SIGNAL(FontUpdated(QFont, int)), this, SLOT(SetEditorFont(QFont, int)));
 
@@ -447,6 +477,10 @@ void MainWindow::OnSettings()
 		}
 		SetProxy();
 		SetDictionary();
+		SaveSnippets();
+		ui->fEditor->SnippetsUpdated();
+	} else {
+		LoadSnippets();
 	}
 
 	SetEditorFont(settings.CurrentFont(), settings.CurrentTabSize());

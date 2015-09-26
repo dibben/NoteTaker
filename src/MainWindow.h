@@ -23,8 +23,11 @@
 #include "SimpleNote.h"
 #include "NoteDatabase.h"
 #include "MessageInterface.h"
+#include "SnippetCollection.h"
+
 #include <QDialog>
 #include <QList>
+#include <QSharedPointer>
 
 namespace Ui {
 class MainWindow;
@@ -95,13 +98,16 @@ typedef QSharedPointer<Note>	NotePtr;
 	void		LoadNotes();
 	void		SetCurrentNote(const Note& note);
 	void		UpdateListItem(NotePtr note, QListWidgetItem* item);
+	void		LoadSnippets();
+	void		SaveSnippets() const;
+	QString		UserSnippetFile() const;
 
-	Ui::MainWindow *ui;
-
+	Ui::MainWindow*		ui;
 	NoteDatabase		fNotes;
 	int					fCurrent;
 	QTimer*				fTimer;
 	SimpleNote*			fSimpleNote;
+	QSharedPointer<SnippetCollection>	fSnippets;
 };
 
 #endif

@@ -19,12 +19,16 @@
 #ifndef SETTINGS_DIALOG_H
 #define SETTINGS_DIALOG_H
 
+#include "SnippetCollection.h"
+
 #include <QDialog>
+#include <QSharedPointer>
 
 namespace Ui {
 class SettingsDialog;
 }
 
+class SnippetTableModel;
 class QButtonGroup;
 
 class SettingsDialog : public QDialog
@@ -38,7 +42,7 @@ enum EProxyType {
 	kCustomProxy
 };
 
-		SettingsDialog(QWidget *parent = 0);
+		SettingsDialog(QSharedPointer<SnippetCollection> snippets, QWidget *parent = 0);
 		~SettingsDialog();
 
 
@@ -59,11 +63,18 @@ signals:
 private slots:
 
 		void	OnFontSelection();
+		void	OnAddSnippet();
+		void	OnRemoveSnippet();
+		void	OnSnippetChanged(const QModelIndex& current, const QModelIndex& previous);
+		void	SnippetTextChanged();
+		void	OnRestoreBuiltIn();
 
 private:
 
-		Ui::SettingsDialog* ui;
-		QButtonGroup*		fProxyGroup;
+		Ui::SettingsDialog*		ui;
+		QButtonGroup*						fProxyGroup;
+		SnippetTableModel*					fSnippetModel;
+		QSharedPointer<SnippetCollection>	fSnippets;
 
 };
 

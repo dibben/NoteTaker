@@ -18,6 +18,7 @@
 #include "NoteEditor.h"
 #include "SpellChecker.h"
 #include "NoteSyntaxHighlighter.h"
+#include "CompleterModel.h"
 
 #include <QMouseEvent>
 #include <QMessageBox>
@@ -26,11 +27,15 @@
 #include <QUrl>
 #include <QDesktopServices>
 #include <QMenu>
+#include <QCompleter>
+#include <QAbstractItemView>
+#include <QScrollBar>
 
 /*!
 	\brief
 
 */
+
 
 NoteEditor::NoteEditor(QWidget *parent) :
 	QTextEdit(parent)
@@ -44,6 +49,9 @@ NoteEditor::NoteEditor(QWidget *parent) :
 	connect(this, SIGNAL(customContextMenuRequested(QPoint)),
 			this, SLOT(ShowContextMenu(QPoint)));
 
+
+	fCompleter = 0;
+	fCompleterModel = 0;
 }
 
 NoteEditor::~NoteEditor()
@@ -75,6 +83,20 @@ void NoteEditor::SetSpellingCheckEnabled(bool enabled)
 void NoteEditor::SetSpellingLanguage(const QString& language)
 {
 	fSpellChecker->LoadDictionary(language);
+}
+
+void NoteEditor::SetCompleter(QSharedPointer<SnippetCollection> snippets)
+{
+	fCompleter = new QCompleter(this);
+	fCompleterModel = new CompleterModel(snippets, fCompleter);
+
+	fCompleter->setModel(fCompleterModel);
+
+	fCompleter->setWidget(this);
+	fCompleter->setCompletionMode(QCompleter::PopupCompletion);
+	fCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+	QObject::connect(fCompleter, SIGNAL(activated(QModelIndex)),
+						this, SLOT(InsertCompletion(QModelIndex)));
 }
 
 
@@ -155,6 +177,12 @@ void NoteEditor::ShowContextMenu(const QPoint& pos)
 	delete contextMenu;
 }
 
+void NoteEditor::SnippetsUpdated()
+{
+	if (fCompleterModel == 0) return;
+	fCompleterModel->ResetModel();
+}
+
 
 QMenu* NoteEditor::CreateSuggestionMenu(const QTextCursor& cursor) const
 {
@@ -197,5 +225,82 @@ void NoteEditor::AddWordToUserWordlist()
 	QString word = action->data().toString();
 	fSpellChecker->AddToUserDictionary(word);
 	fHiglighter->rehighlight();
+}
+
+
+
+void NoteEditor::InsertCompletion(const QModelIndex& index)
+{
+	if (!index.isValid() || fCompleter->widget() != this) return;
+
+	Snippet snippet = fCompleter->completionModel()->data(index, Qt::UserRole).value<Snippet>();
+
+	QTextCursor tc = textCursor();
+
+	tc.clearSelection();
+	tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, fCompleter->completionPrefix().length());
+
+	int pos = tc.position();
+	tc.insertText(snippet.InsertionText());
+	tc.setPosition(pos);
+	tc.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, snippet.CursorPos());
+
+	setTextCursor(tc);
+}
+
+QString NoteEditor::textUnderCursor() const
+{
+	QTextCursor tc = textCursor();
+	tc.select(QTextCursor::WordUnderCursor);
+	return tc.selectedText();
+}
+
+
+void NoteEditor::keyPressEvent(QKeyEvent *e)
+{
+	if (fCompleter && fCompleter->popup()->isVisible()) {
+		// The following keys are forwarded by the completer to the widget
+	   switch (e->key()) {
+	   case Qt::Key_Enter:
+	   case Qt::Key_Return:
+	   case Qt::Key_Escape:
+	   case Qt::Key_Tab:
+	   case Qt::Key_Backtab:
+			e->ignore();
+			return; // let the completer do default behavior
+	   default:
+		   break;
+	   }
+	}
+
+	bool isShortcut = ((e->modifiers() & Qt::ControlModifier) && e->key() == Qt::Key_E); // CTRL+E
+	if (!fCompleter || !isShortcut) // do not process the shortcut when we have a completer
+		QTextEdit::keyPressEvent(e);
+
+	const bool ctrlOrShift = e->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier);
+	if (!fCompleter || (ctrlOrShift && e->text().isEmpty()))
+		return;
+
+	//hide propup if at end of the word
+	static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
+	bool hasModifier = (e->modifiers() != Qt::NoModifier) && !ctrlOrShift;
+	QString completionPrefix = textUnderCursor();
+
+	if (!isShortcut && (hasModifier || e->text().isEmpty()|| completionPrefix.length() < 3
+					  || eow.contains(e->text().right(1)))) {
+		fCompleter->popup()->hide();
+		return;
+	}
+
+	//set prefix in completer
+	if (completionPrefix != fCompleter->completionPrefix()) {
+		fCompleter->setCompletionPrefix(completionPrefix);
+		fCompleter->popup()->setCurrentIndex(fCompleter->completionModel()->index(0, 0));
+	}
+	//show the completer
+	QRect cr = cursorRect();
+	cr.setWidth(fCompleter->popup()->sizeHintForColumn(0)
+				+ fCompleter->popup()->verticalScrollBar()->sizeHint().width());
+	fCompleter->complete(cr); // popup it up!
 }
 

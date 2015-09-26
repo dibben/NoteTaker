@@ -18,15 +18,18 @@
 #include "SettingsDialog.h"
 #include "ui_SettingsDialog.h"
 #include "SpellingDictionary.h"
+#include "SnippetTableModel.h"
 
 #include <QSettings>
 #include <QButtonGroup>
 #include <QIntValidator>
 
-SettingsDialog::SettingsDialog(QWidget *parent) :
+SettingsDialog::SettingsDialog(QSharedPointer<SnippetCollection> snippets, QWidget *parent) :
 	QDialog(parent),
 	ui(new Ui::SettingsDialog)
 {
+	fSnippets = snippets;
+
 	ui->setupUi(this);
 	fProxyGroup = new QButtonGroup(this);
 	fProxyGroup->setExclusive(true);
@@ -46,6 +49,22 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 	foreach (SpellingDictionary dictionary, dictionaries) {
 		ui->fDictionaryCombo->addItem(dictionary.Title(), dictionary.Language());
 	}
+
+	fSnippetModel = new SnippetTableModel(snippets, ui->fSnippetTable);
+	ui->fSnippetTable->setModel(fSnippetModel);
+	connect(ui->fSnippetTable->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+			this, SLOT(OnSnippetChanged(QModelIndex,QModelIndex)));
+	connect(ui->fSnippetEdit, SIGNAL(textChanged()), this, SLOT(SnippetTextChanged()));
+
+	connect(ui->fAddSnippetButton, SIGNAL(clicked(bool)), this, SLOT(OnAddSnippet()));
+	connect(ui->fRemoveSnippetButton, SIGNAL(clicked(bool)), this, SLOT(OnRemoveSnippet()));
+	connect(ui->fRestoreSnippetButton, SIGNAL(clicked(bool)), this, SLOT(OnRestoreBuiltIn()));
+
+	ui->fSnippetTable->setSelectionMode(QAbstractItemView::SingleSelection);
+	ui->fSnippetTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+	ui->fSnippetTable->horizontalHeader()->setStretchLastSection(true);
+
+	OnSnippetChanged(QModelIndex(), QModelIndex());
 }
 
 SettingsDialog::~SettingsDialog()
@@ -155,4 +174,67 @@ void SettingsDialog::OnFontSelection()
 	font.setPointSize(ui->fSizeSpinBox->value());
 
 	emit FontUpdated(font, ui->fTabSpinBox->value());
+}
+
+void SettingsDialog::OnAddSnippet()
+{
+	QModelIndex index = fSnippetModel->CreateSnippet();
+
+	ui->fSnippetTable->setCurrentIndex(index);
+	ui->fSnippetTable->scrollTo(index);
+
+	ui->fSnippetTable->edit(index);
+}
+
+void SettingsDialog::OnRemoveSnippet()
+{
+	QModelIndex modelIndex = ui->fSnippetTable->selectionModel()->currentIndex();
+
+	if (!modelIndex.isValid()) return;
+
+	fSnippetModel->RemoveSnippet(modelIndex);
+}
+
+
+void SettingsDialog::OnSnippetChanged(const QModelIndex& current, const QModelIndex& previous)
+{
+	Q_UNUSED(previous);
+
+	ui->fRemoveSnippetButton->setEnabled(current.isValid());
+	ui->fSnippetEdit->setEnabled(current.isValid());
+
+	if (current.isValid()) {
+		Snippet snippet = fSnippets->GetSnippet(current.row());
+		ui->fSnippetEdit->setReadOnly(snippet.IsBuiltIn());
+		ui->fSnippetEdit->setPlainText(snippet.Contents());
+	} else {
+		ui->fSnippetEdit->clear();
+	}
+
+}
+
+void SettingsDialog::SnippetTextChanged()
+{
+	QModelIndex modelIndex = ui->fSnippetTable->selectionModel()->currentIndex();
+	if (!modelIndex.isValid())  return;
+
+	Snippet snippet = fSnippets->GetSnippet(modelIndex.row());
+	if (snippet.IsBuiltIn()) return;
+
+	snippet.SetContents(ui->fSnippetEdit->toPlainText());
+
+	fSnippets->Update(modelIndex.row(), snippet);
+}
+
+void SettingsDialog::OnRestoreBuiltIn()
+{
+	SnippetCollection builtin;
+	builtin.RestoreBuiltIn();
+
+	for (int eachSnipppet = 0; eachSnipppet < builtin.Count(); ++eachSnipppet) {
+		Snippet s = builtin.GetSnippet(eachSnipppet);
+		if (!fSnippets->Contains(s)) {
+			fSnippetModel->InsertSnippet(s);
+		}
+	}
 }

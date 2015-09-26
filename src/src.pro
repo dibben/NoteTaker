@@ -23,7 +23,11 @@ SOURCES += main.cpp\
     NoteDatabase.cpp \
     MessageInterface.cpp \
     SpellChecker.cpp \
-    SpellingDictionary.cpp
+    SpellingDictionary.cpp \
+    Snippet.cpp \
+    SnippetCollection.cpp \
+    SnippetTableModel.cpp \
+    CompleterModel.cpp
 
 HEADERS  += MainWindow.h \
 	Note.h \
@@ -35,7 +39,11 @@ HEADERS  += MainWindow.h \
     NoteDatabase.h \
     MessageInterface.h \
     SpellChecker.h \
-    SpellingDictionary.h
+    SpellingDictionary.h \
+    Snippet.h \
+    SnippetCollection.h \
+    SnippetTableModel.h \
+    CompleterModel.h
 
 FORMS    += MainWindow.ui \
 	SettingsDialog.ui
@@ -71,4 +79,5 @@ unix {
 
 DISTFILES += \
     notetaker.desktop \
-    notetaker.rc
+    notetaker.rc \
+    builtin-snippets.json

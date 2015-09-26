@@ -1,0 +1,14 @@
+[
+    {
+        "contents": "$now$ ",
+        "description": "Current Time",
+        "is_builtin": true,
+        "trigger": "now"
+    },
+    {
+        "contents": "$date$ ",
+        "description": "Today's Date",
+        "is_builtin": true,
+        "trigger": "today"
+    }
+]

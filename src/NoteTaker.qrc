@@ -9,4 +9,7 @@
         <file>images/text.png</file>
         <file>images/delete2.png</file>
     </qresource>
+    <qresource prefix="/">
+        <file>builtin-snippets.json</file>
+    </qresource>
 </RCC>
