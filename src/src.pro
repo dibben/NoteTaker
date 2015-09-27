@@ -1,7 +1,7 @@
 
 QT += core gui widgets network
 
-TARGET = NoteTaker
+TARGET = notetaker
 TEMPLATE = app
 
 MOC_DIR=.moc

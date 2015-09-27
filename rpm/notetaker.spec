@@ -49,7 +49,7 @@ A Qt-based notes editor that syncs with simplenote
 %setup -q -n %{name}-%{version}
 
 %build
-%{_qt5_qmake} 
+%{_qt5_qmake} -r
 make
 
 %install
