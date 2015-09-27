@@ -100,7 +100,7 @@ QJsonArray SimpleNote::GetNoteList()
 	QString mark;
 	do {
 		QUrlQuery query = CreateQuery();
-		query.addQueryItem("length", "20");
+		query.addQueryItem("length", "80");
 		if (!mark.isEmpty()) {
 			query.addQueryItem("mark", mark);
 		}
