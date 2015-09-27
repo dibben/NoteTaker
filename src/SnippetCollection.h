@@ -19,13 +19,12 @@
 #define SNIPPET_COLLECTION_H
 
 #include "Snippet.h"
-
 #include <QMultiMap>
 
 
 /*!
 	\class  SnippetCollection
-	\author Author
+	\author David Dibben
 	\date Sun Sep 27 2015
 
 	\brief
@@ -34,6 +33,7 @@
 class SnippetCollection
 {
 public:
+
 	SnippetCollection();
 
 	int				Count() const;

@@ -25,13 +25,13 @@
 
 /*!
 	\class  CompleterModel
-	\author Author
+	\author David Dibben
 	\date Sun Sep 27 2015
 
 	\brief
 */
 
-class CompleterModel: public QAbstractListModel
+class CompleterModel : public QAbstractListModel
 {
 		Q_OBJECT
 public:
@@ -41,7 +41,6 @@ virtual int			rowCount(const QModelIndex& parent = QModelIndex()) const;
 virtual QVariant	data(const QModelIndex& index, int role) const;
 
 		Snippet		GetSnippet(const QModelIndex& index) const;
-
 		void		ResetModel();
 
 private:

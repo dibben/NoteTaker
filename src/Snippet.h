@@ -24,10 +24,10 @@
 
 /*!
 	\class  Snippet
-	\author Author
+	\author David Dibben
 	\date Sun Sep 27 2015
 
-	\brief
+	\brief A class to hold a text snippet
 */
 
 class Snippet

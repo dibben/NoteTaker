@@ -78,4 +78,4 @@ private:
 
 };
 
-#endif // TSETTINGSDIALOG_H
+#endif

@@ -20,10 +20,6 @@
 #include "Snippet.h"
 #include <QVariant>
 
-/*!
-	\brief
-
-*/
 
 CompleterModel::CompleterModel(QSharedPointer<SnippetCollection> snippets, QObject* parent) :
 	QAbstractListModel(parent)
@@ -34,6 +30,7 @@ CompleterModel::CompleterModel(QSharedPointer<SnippetCollection> snippets, QObje
 
 int CompleterModel::rowCount(const QModelIndex& parent) const
 {
+	Q_UNUSED(parent);
 	return fSnippets->Count();
 }
 
