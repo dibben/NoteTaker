@@ -49,6 +49,8 @@ NoteEditor::NoteEditor(QWidget *parent) :
 	connect(this, SIGNAL(customContextMenuRequested(QPoint)),
 			this, SLOT(ShowContextMenu(QPoint)));
 
+	connect(this, SIGNAL(cursorPositionChanged()),
+			this, SLOT(OnCursorPositionChanged()));
 
 	fCompleter = 0;
 	fCompleterModel = 0;
@@ -225,6 +227,11 @@ void NoteEditor::AddWordToUserWordlist()
 	QString word = action->data().toString();
 	fSpellChecker->AddToUserDictionary(word);
 	fHiglighter->rehighlight();
+}
+
+void NoteEditor::OnCursorPositionChanged()
+{
+	fHiglighter->OnPositionChanged(textCursor());
 }
 
 

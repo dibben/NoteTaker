@@ -41,6 +41,11 @@ public:
 
 		void	SetCheckSpelling(bool check);
 
+public slots:
+
+		void	OnEditCursorChanged(const QTextCursor& cursor);
+		void	OnPositionChanged(const QTextCursor& cursor);
+
 protected:
 
 		void	highlightBlock(const QString &text);
@@ -55,6 +60,9 @@ private:
 		QRegExp			fUrlExpr;
 		QTextCharFormat	fFormat;
 		QTextCharFormat fUrlFormat;
+
+		int				fLastEditPostition;
+		int				fCursorPosition;
 
 };
 

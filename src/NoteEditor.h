@@ -69,6 +69,7 @@ private slots:
 
 		void	ReplaceWithSuggestion();
 		void	AddWordToUserWordlist();
+		void	OnCursorPositionChanged();
 
 private:
 

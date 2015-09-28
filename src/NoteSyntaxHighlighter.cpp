@@ -40,6 +40,10 @@ NoteSyntaxHighlighter::NoteSyntaxHighlighter(SpellChecker* checker, QTextDocumen
 	fUrlFormat.setAnchor(true);
 	fUrlFormat.setForeground(urlColor);
 	fUrlFormat.setFontUnderline(true);
+
+	connect(parent, SIGNAL(cursorPositionChanged(QTextCursor)), this, SLOT(OnEditCursorChanged(QTextCursor)));
+	fLastEditPostition = -1;
+	fCursorPosition = -1;
 }
 
 void NoteSyntaxHighlighter::SetSearchText(const QString& text)
@@ -52,6 +56,16 @@ void NoteSyntaxHighlighter::SetSearchText(const QString& text)
 void NoteSyntaxHighlighter::SetCheckSpelling(bool check)
 {
 	fCheckSpelling = check;
+}
+
+void NoteSyntaxHighlighter::OnEditCursorChanged(const QTextCursor& cursor)
+{
+	fLastEditPostition = cursor.position();
+}
+
+void NoteSyntaxHighlighter::OnPositionChanged(const QTextCursor& cursor)
+{
+	fCursorPosition = cursor.position();
 }
 
 
@@ -92,20 +106,29 @@ void NoteSyntaxHighlighter::highlightBlock(const QString& text)
 	}
 }
 
+
 void NoteSyntaxHighlighter::HighlightSpelling(const QString& text)
 {
 	if (!fCheckSpelling || fSpellChecker == 0) return;
+
+	bool isEditing = (fLastEditPostition == fCursorPosition);
 
 	QStringList wordList = text.split(QRegExp("\\W+"), QString::SkipEmptyParts);
 	int index = 0;
 	foreach (QString word, wordList) {
 		index = text.indexOf(word, index);
 
-		QTextCharFormat spellFormat = format(index);
-		spellFormat.setUnderlineStyle(QTextCharFormat::WaveUnderline);
-		spellFormat.setUnderlineColor(Qt::red);
+		int pos = currentBlock().position() + index + word.length();
+
+		//+1 because cursor is not yet updated when this function is called.
+		if (isEditing && pos == fCursorPosition + 1) continue;
 
 		if (!fSpellChecker->IsCorrect(word)) {
+
+			QTextCharFormat spellFormat = format(index);
+			spellFormat.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+			spellFormat.setUnderlineColor(Qt::red);
+
 			setFormat(index, word.length(), spellFormat);
 		}
 		index += word.length();
