@@ -151,6 +151,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(ui->fTagsEdit, SIGNAL(textChanged(QString)), this, SLOT(OnTagsChanged()));
 	connect(ui->fExportButton, SIGNAL(clicked(bool)), this, SLOT(OnExport()));
 	connect(ui->fTagsComboBox, SIGNAL(activated(int)), this, SLOT(OnTagSelected()));
+	connect(ui->fEditor, SIGNAL(OpenNote(QString)), this, SLOT(OpenNote(QString)));
 
 	fCurrent = -1;
 
@@ -650,6 +651,44 @@ void MainWindow::FullSync()
 void MainWindow::SetEditorFont(const QFont& font, int tabSize)
 {
 	ui->fEditor->SetFont(font, tabSize);
+}
+
+int MainWindow::FindRow(int index) const
+{
+	int row = -1;
+	int numDisplayed = ui->fNoteList->count();
+	for (int eachNote = 0; eachNote < numDisplayed; ++eachNote) {
+		int id = ui->fNoteList->item(eachNote)->data(Qt::UserRole).toInt();
+		if (id == index) {
+			row = eachNote;
+			break;
+		}
+	}
+
+	return row;
+}
+
+void MainWindow::OpenNote(const QString& title)
+{
+	int index = fNotes.FindIndex(title);
+	if (index == -1) return;
+
+	int row = FindRow(index);
+
+	if (row == -1) {
+		ui->fTagsComboBox->setCurrentIndex(0);
+		row = FindRow(index);
+	}
+	if (row == -1) {
+		ui->fSearchEdit->clear();
+		row = FindRow(index);
+	}
+	if (row == -1) return;
+
+	ui->fNoteList->scrollToItem(ui->fNoteList->item(row));
+
+	ui->fNoteList->setCurrentRow(row);
+
 }
 
 void MainWindow::SetDictionary()

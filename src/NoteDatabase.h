@@ -45,6 +45,9 @@ typedef QSharedPointer<Note>	NotePtr;
 
 	int		Size() const;
 	NotePtr	GetNote(int index) const;
+
+	int		FindIndex(const QString& title) const;
+
 	QHash<QString, int>	AllTags() const;
 
 	bool	UpdateNote(int index, const QString& text);

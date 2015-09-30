@@ -107,9 +107,13 @@ void NoteEditor::mousePressEvent(QMouseEvent* e)
 	if (e->button() == Qt::LeftButton) {
 		QTextCursor cursor = cursorForPosition(e->pos());
 		QString url = FindUrl(cursor);
-
 		if (!url.isEmpty()) {
 			OpenURL(url);
+		}
+		QString noteLink = FindNoteLink(cursor);
+		if (!noteLink.isEmpty()) {
+			emit OpenNote(noteLink);
+			return;
 		}
 	}
 
@@ -139,6 +143,36 @@ QString NoteEditor::FindUrlAtPosition(const QString& text, int pos) const
 			break;
 		}
 		index = expr.indexIn(text, index + length);
+	}
+
+	return url;
+}
+
+QString NoteEditor::FindNoteLink(const QTextCursor& cursor) const
+{
+	int pos = cursor.positionInBlock();
+	QString text = cursor.block().text();
+	return FindNoteLinkAtPosition(text, pos);
+}
+
+QString NoteEditor::FindNoteLinkAtPosition(const QString& text, int pos) const
+{
+	QRegExp expr("\\[\\[.*\\]\\]");
+
+	QString url;
+	int index = expr.indexIn(text);
+	while (index >= 0) {
+		int length = expr.matchedLength();
+		if (pos >= index && pos < index + length) {
+			url = text.mid(index, length);
+			break;
+		} else if (pos < index + length) {
+			break;
+		}
+		index = expr.indexIn(text, index + length);
+	}
+	if (!url.isEmpty()) {
+		url = url.mid(2, url.length() - 4).trimmed();
 	}
 
 	return url;

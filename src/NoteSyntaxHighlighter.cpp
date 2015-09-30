@@ -36,6 +36,9 @@ NoteSyntaxHighlighter::NoteSyntaxHighlighter(SpellChecker* checker, QTextDocumen
 	//http://regexr.com/39i0i
 	fUrlExpr.setPattern("(http(s)?://.)?(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)");
 
+	fNoteLinkExpr.setPattern("\\[\\[.*\\]\\]");
+	fNoteLinkExpr.setMinimal(true);
+
 	QColor urlColor("#3366BB");
 	fUrlFormat.setAnchor(true);
 	fUrlFormat.setForeground(urlColor);
@@ -95,6 +98,17 @@ void NoteSyntaxHighlighter::highlightBlock(const QString& text)
 
 		index = fUrlExpr.indexIn(text, index + length);
 	}
+
+	/*int*/ index = fNoteLinkExpr.indexIn(text);
+	while (index >= 0) {
+		int length = fNoteLinkExpr.matchedLength();
+
+		QTextCharFormat format = fUrlFormat;
+		setFormat(index, length, format);
+
+		index = fNoteLinkExpr.indexIn(text, index + length);
+	}
+
 
 	if (fSearchExpr.isEmpty() || fSearchExpr.pattern().startsWith('#')) return;
 

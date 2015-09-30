@@ -48,6 +48,7 @@ public:
 	void		ClearCurrentNote();
 	QString		CurrentTag() const;
 
+
 public slots:
 
 	void	OnAdd(const QString& text = QString());
@@ -62,6 +63,8 @@ public slots:
 	void	SaveCurrent();
 
 	void	SetEditorFont(const QFont& font, int tabSize = 4);
+
+	void	OpenNote(const QString& title);
 
 private slots:
 
@@ -101,6 +104,7 @@ typedef QSharedPointer<Note>	NotePtr;
 	void		LoadSnippets();
 	void		SaveSnippets() const;
 	QString		UserSnippetFile() const;
+	int			FindRow(int index) const;
 
 	Ui::MainWindow*		ui;
 	NoteDatabase		fNotes;

@@ -59,6 +59,16 @@ NoteDatabase::NotePtr NoteDatabase::GetNote(int index) const
 	return fNotes[index];
 }
 
+int NoteDatabase::FindIndex(const QString& title) const
+{
+	int numNotes = fNotes.size();
+	for (int eachNote = 0; eachNote < numNotes; ++eachNote) {
+		if (fNotes[eachNote]->Title() == title) return eachNote;
+
+	}
+	return -1;
+}
+
 QHash<QString, int> NoteDatabase::AllTags() const
 {
 	QHash<QString, int> tagSet;

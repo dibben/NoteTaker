@@ -58,8 +58,10 @@ private:
 		bool			fCheckSpelling;
 		QRegExp			fSearchExpr;
 		QRegExp			fUrlExpr;
+		QRegExp			fNoteLinkExpr;
 		QTextCharFormat	fFormat;
 		QTextCharFormat fUrlFormat;
+
 
 		int				fLastEditPostition;
 		int				fCursorPosition;

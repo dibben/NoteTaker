@@ -117,7 +117,7 @@ QString Note::Title() const
 	} else {
 		int p = text.indexOf('\n');
 		if (p < -1) return text;
-		return text.left(p);
+		return text.left(p).trimmed();
 	}
 }
 

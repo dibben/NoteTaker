@@ -50,6 +50,10 @@ public:
 		void	SetSpellingLanguage(const QString& language);
 		void	SetCompleter(QSharedPointer<SnippetCollection> snippets);
 
+signals:
+
+		void	OpenNote(const QString& note);
+
 public slots:
 
 		void	OpenURL(const QUrl& url);
@@ -75,6 +79,8 @@ private:
 
 		QString FindUrl(const QTextCursor& cursor) const;
 		QString FindUrlAtPosition(const QString& text, int pos) const;
+		QString FindNoteLink(const QTextCursor& cursor) const;
+		QString FindNoteLinkAtPosition(const QString& text, int pos) const;
 		QMenu*	CreateSuggestionMenu(const QTextCursor& cursor) const;
 		QString textUnderCursor() const;
 
