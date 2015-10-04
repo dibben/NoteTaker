@@ -161,7 +161,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->fEditor->SetSnippets(fSnippets);
 
 	fNotesModel = new NoteListModel(&fNotes, this);
-	fFilterModel = new QSortFilterProxyModel(this);
+	fFilterModel = new NoteSortFilterModel(this);
 	fFilterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
 	fFilterModel->setSortCaseSensitivity(Qt::CaseInsensitive);
 	fFilterModel->setSourceModel(fNotesModel);
@@ -187,13 +187,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::OnSearchChanged()
 {
-	fFilterModel->setFilterRegExp(ui->fSearchEdit->text());
-	ui->fEditor->SetSearchText(ui->fSearchEdit->text());
+	QString searchText = ui->fSearchEdit->text();
+	fFilterModel->setFilterRegExp(searchText);
+	ui->fEditor->SetSearchText(searchText);
 }
 
 void MainWindow::OnTagSelected()
 {
-	UpdateNoteList();
+	fFilterModel->SetFilterTag(CurrentTag());
 }
 
 void MainWindow::SaveCurrent()
@@ -294,61 +295,9 @@ void MainWindow::EditTags()
 
 void MainWindow::UpdateNoteList()
 {
-	int currentNote = -1;
-//	QListWidgetItem* item = ui->fNoteList->currentItem();
-	QTextCursor cursor = ui->fEditor->textCursor();
-	//if (item != 0) {
-	//	currentNote = item->data(Qt::UserRole).toInt();
-//	}
 
 	fNotesModel->ResetModel();
-	//fFilterModel->sort(0);
-
-	/*
-	ui->fNoteList->clear();
-
-	QString searchText = ui->fSearchEdit->text();
-	int selectPos = -1;
-	QRegExp expr(searchText);
-	expr.setPatternSyntax(QRegExp::Wildcard);
-
-	QString tagText = CurrentTag();
-
-	int count = 0;
-	for (int i = 0; i < fNotes.Size(); i++) {
-		NotePtr note = fNotes.GetNote(i);
-		if (note->IsDeleted()) continue;
-
-		if (!tagText.isEmpty() && !note->Tags().contains(tagText)) continue;
-
-		if (expr.pattern().isEmpty() || note->Contains(expr)) {
-
-			QListWidgetItem* item = new QListWidgetItem;
-			item->setData(Qt::UserRole, i);
-			UpdateListItem(note, item);
-			ui->fNoteList->addItem(item);
-			if (i == currentNote) {
-				selectPos = count;
-			}
-			count++;
-		}
-	}
-
-	ClearCurrentNote();
-	if (selectPos != -1) {
-		ui->fEditor->setText(fNotes.GetNote(currentNote)->Text());
-		ui->fNoteList->setCurrentRow(selectPos);
-		ui->fEditor->setTextCursor(cursor);
-	} else {
-		if (ui->fNoteList->count() > 0) {
-			int index = ui->fNoteList->item(0)->data(Qt::UserRole).toInt();
-			ui->fEditor->setText(fNotes.GetNote(index)->Text());
-		}
-		ui->fNoteList->setCurrentRow(0);
-	}
-	*/
-
-	//TODO factor out displayed rows
+	fFilterModel->sort(0);
 	SetEditorEnabled(ui->fNoteList->model()->rowCount() > 0);
 }
 
@@ -435,6 +384,7 @@ void MainWindow::OnTextChanged()
 
 void MainWindow::OnTagsChanged()
 {
+	//TODO Factor out function to get current note
 	if (fCurrent < 0) return;
 
 	NotePtr  note = fNotes.GetNote(fCurrent);
@@ -451,13 +401,14 @@ void MainWindow::OnTagsChanged()
 
 void MainWindow::OnAdd(const QString& text)
 {
-	fNotes.AddNote(text, CurrentTag());
-	UpdateNoteList();
+	fNotesModel->AddNote(text, CurrentTag());
 
-	int numRows =  ui->fNoteList->model()->rowCount();
-	QModelIndex lastIndex = ui->fNoteList->model()->index(numRows - 1, 0);
-	OnSelection(lastIndex);
-	ui->fNoteList->setCurrentIndex(lastIndex);
+	int rows = fNotesModel->rowCount();
+	QModelIndex lastIndex = fNotesModel->index(rows - 1);
+	QModelIndex index = fFilterModel->mapFromSource(lastIndex);
+
+	OnSelection(index);
+	ui->fNoteList->setCurrentIndex(index);
 }
 
 
@@ -494,6 +445,7 @@ void MainWindow::OnFavourite()
 
 	note->SetFavourite(ui->fFavouriteButton->isChecked());
 	UpdateFavouriteIcon();
+	fFilterModel->invalidate();
 }
 
 void MainWindow::UpdateFavouriteIcon()
@@ -516,7 +468,6 @@ void MainWindow::SetEditorEnabled(bool enable)
 }
 
 
-
 void MainWindow::LoadNotes()
 {
 	fNotes.LoadNotes();
@@ -533,7 +484,7 @@ void MainWindow::SetMessage(const QString& message)
 void MainWindow::OnExport()
 {
 	QModelIndex current = ui->fNoteList->currentIndex();
-	if (!current.isValid() == 0) return;
+	if (!current.isValid()) return;
 
 	QSettings settings;
 	QString lastDir = settings.value("export_dir", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
@@ -547,18 +498,20 @@ void MainWindow::OnExport()
 
 void MainWindow::RemoveCurrent()
 {
-
 	QModelIndex current = ui->fNoteList->currentIndex();
-	if (!current.isValid() == 0) return;
+	if (!current.isValid()) return;
 	int index = current.data(Qt::UserRole).toInt();
 
 	fNotes.DeleteNote(index);
 
 	fCurrent = -1;
+	//TODO use signal from note instead
+	fFilterModel->invalidate();
 
-	UpdateNoteList();
 	if (current.row() >= ui->fNoteList->model()->rowCount()) {
 		current = ui->fNoteList->model()->index(current.row() - 1, 0);
+	} else {
+		current = ui->fNoteList->model()->index(current.row(), 0);
 	}
 	OnSelection(current);
 	ui->fNoteList->setCurrentIndex(current);
@@ -631,15 +584,23 @@ void MainWindow::FullSync()
 	SimpleNote* synchroniser = GetSynchroniser();
 	if (synchroniser == 0) return;
 
+	QString id = ui->fNoteList->currentIndex().data(NoteListModel::kID).toString();
+
 	QProgressDialog progress(this);
 	fNotes.FullSync(synchroniser, &progress);
 
-	//TODO proper handling of current note
-	if (fCurrent >= fNotes.Size()) {
-		fCurrent = -1;
+	UpdateNoteList();
+
+	int rows = ui->fNoteList->model()->rowCount();
+	for (int eachRow = 0; eachRow < rows; ++eachRow) {
+		QModelIndex index = ui->fNoteList->model()->index(eachRow, 0);
+		if (index.data(NoteListModel::kID).toString() == id) {
+			OnSelection(index);
+			ui->fNoteList->setCurrentIndex(index);
+			break;
+		}
 	}
 
-	UpdateNoteList();
 	UpdateTagSelector();
 }
 

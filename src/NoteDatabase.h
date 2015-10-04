@@ -56,8 +56,6 @@ typedef QSharedPointer<Note>	NotePtr;
 	void	AddNote(const QString& text, const QString& tag = QString());
 	void	AddNote(NotePtr note);
 
-
-
 	void	RemoveNotes(const QList<int>& indices);
 	void	RemoveNote(int index);
 
@@ -70,6 +68,7 @@ typedef QSharedPointer<Note>	NotePtr;
 	void	FullSync(SimpleNote* synchroniser, QProgressDialog* progress = 0);
 
 	void	SetMessageReceiver(MessageInterface* interface);
+
 
 private:
 

@@ -41,6 +41,8 @@ int NoteListModel::rowCount(const QModelIndex& parent) const
 }
 
 
+
+
 QVariant NoteListModel::data(const QModelIndex& index, int role) const
 {
 	int row = index.row();
@@ -54,18 +56,30 @@ QVariant NoteListModel::data(const QModelIndex& index, int role) const
 		case Qt::ToolTipRole:
 			return QVariant();
 
-		case Qt::UserRole:
+		case kIndex:
 			return row;
 
-		case Qt::UserRole + 1:
+		case kPreviewText:
 		{
 			QString title = note->Title();
 			QString previewText = note->Text().mid(title.length(), 200);
 			previewText = previewText.replace('\n', ' ').trimmed();
 			return previewText;
 		}
-		case Qt::UserRole + 2:
+		case kDate:
 			return note->ModifiedDate();
+
+		case kDeleted:
+			return note->IsDeleted();
+
+		case kTags:
+			return note->Tags();
+
+		case kIsFavourite:
+			return note->IsFavourite();
+
+		case kID:
+			return note->ID();
 
 		case Qt::ForegroundRole:
 			if (note->Text().isEmpty()) {
@@ -79,6 +93,12 @@ QVariant NoteListModel::data(const QModelIndex& index, int role) const
 
 }
 
+QModelIndex NoteListModel::index(int row, int column, const QModelIndex& parent) const
+{
+	Q_UNUSED(parent);
+	return createIndex(row, column);
+}
+
 void NoteListModel::NoteChanged(int row)
 {
 	emit dataChanged(index(row), index(row));
@@ -89,3 +109,28 @@ void NoteListModel::ResetModel()
 	beginResetModel();
 	endResetModel();
 }
+
+void NoteListModel::AddNote(const QString& text, const QString& tag)
+{
+	int size = fNoteDB->Size();
+	beginInsertRows(QModelIndex(), size, size);
+	fNoteDB->AddNote(text, tag);
+	endInsertRows();
+}
+
+void NoteListModel::AddNote(NotePtr note)
+{
+	int size = fNoteDB->Size();
+	beginInsertRows(QModelIndex(), size, size);
+	fNoteDB->AddNote(note);
+	endInsertRows();
+}
+
+void NoteListModel::RemoveNote(int index)
+{
+	beginRemoveRows(QModelIndex(), index, index);
+	fNoteDB->RemoveNote(index);
+	endRemoveRows();
+}
+
+

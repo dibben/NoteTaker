@@ -22,6 +22,7 @@
 #include <QAbstractListModel>
 
 class NoteDatabase;
+class Note;
 
 /*!
 	\class  NoteListModel
@@ -34,16 +35,36 @@ class NoteDatabase;
 class NoteListModel : public QAbstractListModel
 {
 public:
-	NoteListModel(NoteDatabase* noteDatabase, QObject *parent = 0);
+
+enum {
+	kIndex = Qt::UserRole,
+	kPreviewText,
+	kDate,
+	kDeleted,
+	kTags,
+	kIsFavourite,
+	kID
+};
+
+typedef QSharedPointer<Note>	NotePtr;
+
+		NoteListModel(NoteDatabase* noteDatabase, QObject *parent = 0);
 
 
 virtual int			rowCount(const QModelIndex& parent = QModelIndex()) const;
 virtual QVariant	data(const QModelIndex& index, int role) const;
 
+		QModelIndex	index(int row, int column = 0, const QModelIndex &parent = QModelIndex()) const;
 
 		void		NoteChanged(int row);
 
 		void		ResetModel();
+
+public slots:
+
+		void		AddNote(const QString& text, const QString& tag = QString());
+		void		AddNote(NotePtr note);
+		void		RemoveNote(int index);
 
 private:
 

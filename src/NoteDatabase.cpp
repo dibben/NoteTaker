@@ -126,7 +126,7 @@ void NoteDatabase::AddNote(const QString& text, const QString& tag)
 	if (!tag.isEmpty()) {
 		note->SetTags(QStringList() << tag);
 	}
-	fNotes.append( note );
+	AddNote(note);
 }
 
 void NoteDatabase::AddNote(NotePtr note)

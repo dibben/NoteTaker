@@ -25,11 +25,12 @@
 #include "MessageInterface.h"
 #include "SnippetCollection.h"
 #include "NoteListModel.h"
+#include "NoteSortFilterModel.h"
 
 #include <QDialog>
 #include <QList>
 #include <QSharedPointer>
-#include <QSortFilterProxyModel>
+
 
 namespace Ui {
 class MainWindow;
@@ -112,7 +113,7 @@ typedef QSharedPointer<Note>	NotePtr;
 	int					fCurrent;
 	QTimer*				fTimer;
 	NoteListModel*		fNotesModel;
-	QSortFilterProxyModel*	fFilterModel;
+	NoteSortFilterModel*	fFilterModel;
 	SimpleNote*			fSimpleNote;
 	QSharedPointer<SnippetCollection>	fSnippets;
 };
