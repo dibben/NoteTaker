@@ -117,7 +117,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QListWidget" name="fNoteList"/>
+        <widget class="QListView" name="fNoteList"/>
        </item>
        <item>
         <widget class="QFrame" name="fSettingsPane">

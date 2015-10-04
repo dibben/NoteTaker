@@ -24,10 +24,12 @@
 #include "NoteDatabase.h"
 #include "MessageInterface.h"
 #include "SnippetCollection.h"
+#include "NoteListModel.h"
 
 #include <QDialog>
 #include <QList>
 #include <QSharedPointer>
+#include <QSortFilterProxyModel>
 
 namespace Ui {
 class MainWindow;
@@ -69,7 +71,7 @@ public slots:
 private slots:
 
 	void	UpdateNoteList();
-	void	OnSelection(int row);
+	void	OnSelection(const QModelIndex& index);
 	void	OnTextChanged();
 	void	OnTagsChanged();
 	void	OnSearchChanged();
@@ -100,7 +102,6 @@ typedef QSharedPointer<Note>	NotePtr;
 	void		SetEditorEnabled(bool enable);
 	void		LoadNotes();
 	void		SetCurrentNote(const Note& note);
-	void		UpdateListItem(NotePtr note, QListWidgetItem* item);
 	void		LoadSnippets();
 	void		SaveSnippets() const;
 	QString		UserSnippetFile() const;
@@ -110,6 +111,8 @@ typedef QSharedPointer<Note>	NotePtr;
 	NoteDatabase		fNotes;
 	int					fCurrent;
 	QTimer*				fTimer;
+	NoteListModel*		fNotesModel;
+	QSortFilterProxyModel*	fFilterModel;
 	SimpleNote*			fSimpleNote;
 	QSharedPointer<SnippetCollection>	fSnippets;
 };

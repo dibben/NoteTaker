@@ -145,7 +145,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	connect(ui->fFavouriteButton, SIGNAL(clicked(bool)), this, SLOT(OnFavourite()));
 
-	connect(ui->fNoteList, SIGNAL(currentRowChanged(int)), this, SLOT(OnSelection(int)));
+
 	connect(ui->fEditor, SIGNAL(textChanged()), this, SLOT(OnTextChanged()));
 	connect(ui->fSearchEdit, SIGNAL(textChanged(QString)), this, SLOT(OnSearchChanged()));
 	connect(ui->fTagsEdit, SIGNAL(textChanged(QString)), this, SLOT(OnTagsChanged()));
@@ -160,10 +160,20 @@ MainWindow::MainWindow(QWidget *parent) :
 	fSnippets.reset(new SnippetCollection);
 	ui->fEditor->SetSnippets(fSnippets);
 
+	fNotesModel = new NoteListModel(&fNotes, this);
+	fFilterModel = new QSortFilterProxyModel(this);
+	fFilterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+	fFilterModel->setSortCaseSensitivity(Qt::CaseInsensitive);
+	fFilterModel->setSourceModel(fNotesModel);
+
+	ui->fNoteList->setModel(fFilterModel);
+
+	connect(ui->fNoteList->selectionModel(), SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), this, SLOT(OnSelection(QModelIndex)));
+
 	LoadNotes();
 	UpdateNoteList();
 
-	ui->fNoteList->setCurrentRow(0);
+	ui->fNoteList->setCurrentIndex(fFilterModel->index(0, 0));
 	ui->fNoteList->setFocus();
 
 	RestoreSettings();
@@ -177,7 +187,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::OnSearchChanged()
 {
-	UpdateNoteList();
+	fFilterModel->setFilterRegExp(ui->fSearchEdit->text());
 	ui->fEditor->SetSearchText(ui->fSearchEdit->text());
 }
 
@@ -261,7 +271,7 @@ void MainWindow::RestoreSettings()
 
 void MainWindow::OnEnter()
 {
-	if (ui->fNoteList->currentItem()) {
+	if (ui->fNoteList->currentIndex().isValid()) {
 		ui->fEditor->setFocus();
 		ui->fEditor->moveCursor(QTextCursor::End);
 	} else if (!ui->fSearchEdit->text().isEmpty()) {
@@ -285,12 +295,16 @@ void MainWindow::EditTags()
 void MainWindow::UpdateNoteList()
 {
 	int currentNote = -1;
-	QListWidgetItem* item = ui->fNoteList->currentItem();
+//	QListWidgetItem* item = ui->fNoteList->currentItem();
 	QTextCursor cursor = ui->fEditor->textCursor();
-	if (item != 0) {
-		currentNote = item->data(Qt::UserRole).toInt();
-	}
+	//if (item != 0) {
+	//	currentNote = item->data(Qt::UserRole).toInt();
+//	}
 
+	fNotesModel->ResetModel();
+	//fFilterModel->sort(0);
+
+	/*
 	ui->fNoteList->clear();
 
 	QString searchText = ui->fSearchEdit->text();
@@ -332,35 +346,12 @@ void MainWindow::UpdateNoteList()
 		}
 		ui->fNoteList->setCurrentRow(0);
 	}
+	*/
 
-	SetEditorEnabled(ui->fNoteList->count() > 0);
+	//TODO factor out displayed rows
+	SetEditorEnabled(ui->fNoteList->model()->rowCount() > 0);
 }
 
-void MainWindow::UpdateListItem(NotePtr note, QListWidgetItem* item)
-{
-	QString title = note->Title();
-	item->setText(title);
-
-	if (note->Text().isEmpty()) {
-		item->setData(Qt::ForegroundRole, QColor(Qt::gray));
-	} else {
-		item->setData(Qt::ForegroundRole, QVariant());
-	}
-	//TODO Move preview text extraction into Note
-	QString previewText = note->Text().mid(title.length(), 200);
-	previewText = previewText.replace('\n', ' ').trimmed();
-	item->setData(Qt::UserRole + 1, previewText);
-	item->setData(Qt::UserRole + 2, note->ModifiedDate());
-/*
-	if (note->IsFavourite()) {
-		QPixmap pm(":/images/images/star_yellow.png");
-		pm = pm.scaledToWidth(16);
-		item->setData(Qt::DecorationRole, pm);
-	} else {
-		item->setData(Qt::DecorationRole, QVariant());
-	}
-*/
-}
 
 void MainWindow::LoadSnippets()
 {
@@ -389,14 +380,16 @@ QString MainWindow::UserSnippetFile() const
 }
 
 
-void MainWindow::OnSelection(int row)
+void MainWindow::OnSelection(const QModelIndex& index)
 {
 	SaveCurrent();
 
-	if (row < 0) {
+	if (!index.isValid()) {
 		ClearCurrentNote();
 	} else {
-		fCurrent = ui->fNoteList->item(row)->data(Qt::UserRole).toInt();
+
+		//TODO remove int -. use key
+		fCurrent = index.data(Qt::UserRole).toInt();
 		SetCurrentNote(*fNotes.GetNote(fCurrent));
 	}
 
@@ -430,7 +423,7 @@ void MainWindow::OnTextChanged()
 	QString currentText = ui->fEditor->toPlainText();
 	note->SetText(currentText);
 
-	UpdateListItem(note, ui->fNoteList->currentItem());
+	fNotesModel->NoteChanged(fCurrent);
 
 	if (note->NeedsSave()) {
 		SetMessage(tr("Note modified"));
@@ -460,7 +453,11 @@ void MainWindow::OnAdd(const QString& text)
 {
 	fNotes.AddNote(text, CurrentTag());
 	UpdateNoteList();
-	ui->fNoteList->setCurrentRow(ui->fNoteList->count() - 1);
+
+	int numRows =  ui->fNoteList->model()->rowCount();
+	QModelIndex lastIndex = ui->fNoteList->model()->index(numRows - 1, 0);
+	OnSelection(lastIndex);
+	ui->fNoteList->setCurrentIndex(lastIndex);
 }
 
 
@@ -497,9 +494,6 @@ void MainWindow::OnFavourite()
 
 	note->SetFavourite(ui->fFavouriteButton->isChecked());
 	UpdateFavouriteIcon();
-	//need to keep track of current as it moves here
-//	std::sort(fNoteList.begin(), fNoteList.end(), Compare);
-//	UpdateNoteList();
 }
 
 void MainWindow::UpdateFavouriteIcon()
@@ -538,35 +532,36 @@ void MainWindow::SetMessage(const QString& message)
 
 void MainWindow::OnExport()
 {
-	QListWidgetItem* current = ui->fNoteList->currentItem();
-	if (current == 0) return;
+	QModelIndex current = ui->fNoteList->currentIndex();
+	if (!current.isValid() == 0) return;
 
 	QSettings settings;
 	QString lastDir = settings.value("export_dir", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
 
 	QString filename = QFileDialog::getSaveFileName(this, tr("Save Note As Text"), lastDir, tr("Text Files(*.txt)"));
 	if (!filename.isEmpty()) {
-		int index = current->data(Qt::UserRole).toInt();
+		int index = current.data(Qt::UserRole).toInt();
 		fNotes.GetNote(index)->Export(filename);
 	}
 }
 
 void MainWindow::RemoveCurrent()
 {
-	int currentRow = ui->fNoteList->currentRow();
-	QListWidgetItem* current = ui->fNoteList->currentItem();
-	if (current == 0) return;
-	int index = current->data(Qt::UserRole).toInt();
+
+	QModelIndex current = ui->fNoteList->currentIndex();
+	if (!current.isValid() == 0) return;
+	int index = current.data(Qt::UserRole).toInt();
 
 	fNotes.DeleteNote(index);
 
 	fCurrent = -1;
 
 	UpdateNoteList();
-	if (currentRow >= ui->fNoteList->count()) {
-		currentRow = ui->fNoteList->count() - 1;
+	if (current.row() >= ui->fNoteList->model()->rowCount()) {
+		current = ui->fNoteList->model()->index(current.row() - 1, 0);
 	}
-	ui->fNoteList->setCurrentRow(currentRow);
+	OnSelection(current);
+	ui->fNoteList->setCurrentIndex(current);
 }
 
 QString MainWindow::CurrentTag() const
@@ -658,9 +653,10 @@ void MainWindow::SetEditorFont(const QFont& font, int tabSize)
 int MainWindow::FindRow(int index) const
 {
 	int row = -1;
-	int numDisplayed = ui->fNoteList->count();
+	int numDisplayed = ui->fNoteList->model()->rowCount();
 	for (int eachNote = 0; eachNote < numDisplayed; ++eachNote) {
-		int id = ui->fNoteList->item(eachNote)->data(Qt::UserRole).toInt();
+		//TODO cleanup the mess
+		int id = ui->fNoteList->model()->index(eachNote, 0).data(Qt::UserRole).toInt();
 		if (id == index) {
 			row = eachNote;
 			break;
@@ -687,9 +683,10 @@ void MainWindow::OpenNote(const QString& title)
 	}
 	if (row == -1) return;
 
-	ui->fNoteList->scrollToItem(ui->fNoteList->item(row));
 
-	ui->fNoteList->setCurrentRow(row);
+	QModelIndex current = ui->fNoteList->model()->index(row, 0);
+	OnSelection(current);
+	ui->fNoteList->setCurrentIndex(current);
 
 }
 

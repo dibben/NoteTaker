@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     Snippet.cpp \
     SnippetCollection.cpp \
     SnippetTableModel.cpp \
-    CompleterModel.cpp
+    CompleterModel.cpp \
+    NoteListModel.cpp
 
 HEADERS  += MainWindow.h \
 	Note.h \
@@ -43,7 +44,8 @@ HEADERS  += MainWindow.h \
     Snippet.h \
     SnippetCollection.h \
     SnippetTableModel.h \
-    CompleterModel.h
+    CompleterModel.h \
+    NoteListModel.h
 
 FORMS    += MainWindow.ui \
 	SettingsDialog.ui
