@@ -48,7 +48,8 @@ public:
 		void	SetSearchText(const QString& text);
 		void	SetSpellingCheckEnabled(bool enabled);
 		void	SetSpellingLanguage(const QString& language);
-		void	SetCompleter(QSharedPointer<SnippetCollection> snippets);
+		void	SetSnippets(QSharedPointer<SnippetCollection> snippets);
+		void	SetNoteTitles(const QStringList& titles);
 
 signals:
 
@@ -82,7 +83,7 @@ private:
 		QString FindNoteLink(const QTextCursor& cursor) const;
 		QString FindNoteLinkAtPosition(const QString& text, int pos) const;
 		QMenu*	CreateSuggestionMenu(const QTextCursor& cursor) const;
-		QString textUnderCursor() const;
+		QString CompletionTextUnderCursor() const;
 
 		NoteSyntaxHighlighter*	fHiglighter;
 		SpellChecker*			fSpellChecker;

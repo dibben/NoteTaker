@@ -88,6 +88,17 @@ QHash<QString, int> NoteDatabase::AllTags() const
 	return tagSet;
 }
 
+QStringList NoteDatabase::NoteTitles() const
+{
+	QStringList result;
+	int numNotes = fNotes.size();
+	for (int eachNote = 0; eachNote < numNotes; ++eachNote) {
+		result.append(fNotes[eachNote]->Title());
+	}
+
+	return result;
+}
+
 bool NoteDatabase::UpdateNote(int index, const QString& text)
 {
 	if (index < 0 || index >= Size()) return false;

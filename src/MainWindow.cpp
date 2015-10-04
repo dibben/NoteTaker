@@ -158,7 +158,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	fNotes.SetMessageReceiver(this);
 
 	fSnippets.reset(new SnippetCollection);
-	ui->fEditor->SetCompleter(fSnippets);
+	ui->fEditor->SetSnippets(fSnippets);
 
 	LoadNotes();
 	UpdateNoteList();
@@ -408,6 +408,8 @@ void MainWindow::SetCurrentNote(const Note& note)
 	ui->fEditor->setText(note.Text());
 	ui->fTagsEdit->setText(note.Tags().join(" "));
 	ui->fFavouriteButton->setChecked(note.IsFavourite());
+
+	ui->fEditor->SetNoteTitles(fNotes.NoteTitles());
 }
 
 void MainWindow::ClearCurrentNote()

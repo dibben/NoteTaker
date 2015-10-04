@@ -35,6 +35,12 @@ class CompleterModel : public QAbstractListModel
 {
 		Q_OBJECT
 public:
+
+enum {
+	kCompletionText = Qt::UserRole + 1,
+	kCursorPosition
+};
+
 		CompleterModel(QSharedPointer<SnippetCollection> snippets, QObject* parent = 0);
 
 virtual int			rowCount(const QModelIndex& parent = QModelIndex()) const;
@@ -43,9 +49,12 @@ virtual QVariant	data(const QModelIndex& index, int role) const;
 		Snippet		GetSnippet(const QModelIndex& index) const;
 		void		ResetModel();
 
+		void		SetTitles(const QStringList& noteTitles);
+
 private:
 
 		QSharedPointer<SnippetCollection>	fSnippets;
+		QStringList	fTitles;
 };
 
 #endif

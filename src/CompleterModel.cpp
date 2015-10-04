@@ -20,6 +20,7 @@
 #include "Snippet.h"
 #include <QVariant>
 
+#include <QMessageBox>
 
 CompleterModel::CompleterModel(QSharedPointer<SnippetCollection> snippets, QObject* parent) :
 	QAbstractListModel(parent)
@@ -31,27 +32,64 @@ CompleterModel::CompleterModel(QSharedPointer<SnippetCollection> snippets, QObje
 int CompleterModel::rowCount(const QModelIndex& parent) const
 {
 	Q_UNUSED(parent);
-	return fSnippets->Count();
+	return fSnippets->Count() + fTitles.count();
 }
 
 QVariant CompleterModel::data(const QModelIndex& index, int role) const
 {
 	if (!index.isValid() || index.row() > rowCount()) return QVariant();
 
-	const Snippet snippet = fSnippets->GetSnippet(index.row());
+
+	int numSnippets = fSnippets->Count();
+	bool isTitle = index.row() >= numSnippets;
+	int titleIndex = index.row() - numSnippets;
+
+	Snippet snippet;
+	if (!isTitle) {
+		snippet = fSnippets->GetSnippet(index.row());
+	}
 
 	switch (role) {
 		case Qt::DisplayRole:
-			return QString("%1 %2").arg(snippet.Trigger(), -10).arg(snippet.Description());
+			if (isTitle) {
+				return fTitles[titleIndex];
+			} else {
+				return QString("%1 %2").arg(snippet.Trigger(), -10).arg(snippet.Description());
+			}
 
 		case Qt::EditRole:
-			return snippet.Trigger();
+			if (isTitle) {
+				return "[[" + fTitles[titleIndex];
+			} else {
+				return snippet.Trigger();
+			}
 
 		case Qt::ToolTipRole:
-			return snippet.InsertionText().toHtmlEscaped();
+			if (isTitle) {
+				return fTitles[titleIndex];
+			} else {
+				return snippet.InsertionText().toHtmlEscaped();
+			}
 
 		case Qt::UserRole:
-			return QVariant::fromValue(snippet);
+			if (isTitle) {
+				return QVariant(fTitles[titleIndex]);
+			} else {
+				return QVariant::fromValue(snippet);
+			}
+
+		case kCompletionText:
+			if (isTitle) {
+				return "[[" + fTitles[titleIndex] + "]] ";
+			} else {
+				return snippet.InsertionText();
+			}
+		case kCursorPosition:
+			if (isTitle) {
+				return fTitles[titleIndex].size() + 5;
+			} else {
+				return snippet.CursorPos();
+			}
 
 		break;
 	}
@@ -60,13 +98,25 @@ QVariant CompleterModel::data(const QModelIndex& index, int role) const
 
 Snippet CompleterModel::GetSnippet(const QModelIndex& index) const
 {
-	return fSnippets->GetSnippet(index.row());
+	int numSnippets = fSnippets->Count();
+	if (index.row() >= numSnippets) {
+		return Snippet();
+	} else {
+		return fSnippets->GetSnippet(index.row());
+	}
 }
 
 void CompleterModel::ResetModel()
 {
 	beginResetModel();
 	endResetModel();
+}
+
+
+void CompleterModel::SetTitles(const QStringList& noteTitles)
+{
+	fTitles = noteTitles;
+	ResetModel();
 }
 
 

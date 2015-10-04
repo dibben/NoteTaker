@@ -87,7 +87,7 @@ void NoteEditor::SetSpellingLanguage(const QString& language)
 	fSpellChecker->LoadDictionary(language);
 }
 
-void NoteEditor::SetCompleter(QSharedPointer<SnippetCollection> snippets)
+void NoteEditor::SetSnippets(QSharedPointer<SnippetCollection> snippets)
 {
 	fCompleter = new QCompleter(this);
 	fCompleterModel = new CompleterModel(snippets, fCompleter);
@@ -98,8 +98,16 @@ void NoteEditor::SetCompleter(QSharedPointer<SnippetCollection> snippets)
 	fCompleter->setCompletionMode(QCompleter::PopupCompletion);
 	fCompleter->setCaseSensitivity(Qt::CaseInsensitive);
 	QObject::connect(fCompleter, SIGNAL(activated(QModelIndex)),
-						this, SLOT(InsertCompletion(QModelIndex)));
+					 this, SLOT(InsertCompletion(QModelIndex)));
 }
+
+void NoteEditor::SetNoteTitles(const QStringList& titles)
+{
+	if (fCompleterModel == 0) return;
+
+	fCompleterModel->SetTitles(titles);
+}
+
 
 
 void NoteEditor::mousePressEvent(QMouseEvent* e)
@@ -274,26 +282,48 @@ void NoteEditor::InsertCompletion(const QModelIndex& index)
 {
 	if (!index.isValid() || fCompleter->widget() != this) return;
 
-	Snippet snippet = fCompleter->completionModel()->data(index, Qt::UserRole).value<Snippet>();
+	QString completionText = fCompleter->completionModel()->data(index, CompleterModel::kCompletionText).toString();
+	int cursorPos = fCompleter->completionModel()->data(index, CompleterModel::kCursorPosition).toInt();
 
 	QTextCursor tc = textCursor();
-
 	tc.clearSelection();
 	tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, fCompleter->completionPrefix().length());
 
 	int pos = tc.position();
-	tc.insertText(snippet.InsertionText());
+	tc.insertText(completionText);
 	tc.setPosition(pos);
-	tc.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, snippet.CursorPos());
+	tc.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, cursorPos);
 
 	setTextCursor(tc);
 }
 
-QString NoteEditor::textUnderCursor() const
+QString NoteEditor::CompletionTextUnderCursor() const
 {
 	QTextCursor tc = textCursor();
+	int pos = tc.position();
+
 	tc.select(QTextCursor::WordUnderCursor);
-	return tc.selectedText();
+	QString result = tc.selectedText();
+
+	//include text for note links
+	pos = pos - result.length() - 1;
+
+	QString buffer;
+	while (pos > 1) {
+		QChar c = document()->characterAt(pos);
+		if (c == '\n') break;
+		buffer.prepend(c);
+		QChar c1 = document()->characterAt(pos - 1);
+		if (c == QChar(']') && c1 == QChar(']')) break;
+		if (c == QChar('[') && c1 == QChar('[')) {
+			buffer.prepend('[');
+			result = buffer + result;
+			break;
+		}
+		--pos;
+	}
+
+	return result;
 }
 
 
@@ -325,10 +355,12 @@ void NoteEditor::keyPressEvent(QKeyEvent *e)
 	//hide propup if at end of the word
 	static QString eow("~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="); // end of word
 	bool hasModifier = (e->modifiers() != Qt::NoModifier) && !ctrlOrShift;
-	QString completionPrefix = textUnderCursor();
+	QString completionPrefix = CompletionTextUnderCursor();
+
+	bool isNoteLink = completionPrefix.startsWith("[[") && !completionPrefix.contains("]]");
 
 	if (!isShortcut && (hasModifier || e->text().isEmpty()|| completionPrefix.length() < 3
-					  || eow.contains(e->text().right(1)))) {
+					  || (!isNoteLink && eow.contains(e->text().right(1))))) {
 		fCompleter->popup()->hide();
 		return;
 	}
